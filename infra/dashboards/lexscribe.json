@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 39,
+  "title": "Lexscribe",
+  "uid": "lexscribe",
+  "tags": ["lexscribe", "rag"],
+  "timezone": "browser",
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "QA latency (P50/P95)",
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(lexscribe_qa_latency_seconds_bucket[5m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(lexscribe_qa_latency_seconds_bucket[5m])))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ingest queue depth by stage",
+      "id": 2,
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "lexscribe_ingest_queue_depth", "legendFormat": "{{queue}}" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "DLQ size",
+      "id": 3,
+      "gridPos": { "x": 0, "y": 8, "w": 6, "h": 6 },
+      "targets": [{ "expr": "lexscribe_dlq_size" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Cost USD per tenant (rate, 5m)",
+      "id": 4,
+      "gridPos": { "x": 6, "y": 8, "w": 18, "h": 6 },
+      "targets": [
+        {
+          "expr": "rate(lexscribe_cost_usd_total[5m])",
+          "legendFormat": "{{tenant}}"
+        }
+      ]
+    }
+  ],
+  "templating": { "list": [] },
+  "annotations": { "list": [] }
+}

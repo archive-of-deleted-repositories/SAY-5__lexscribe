@@ -1,0 +1,57 @@
+name: mna_v1
+version: 1
+description: |
+  Ten M&A diligence questions across six clause categories. Quality > quantity:
+  each question lists the clause types that must appear in citations and the
+  doc IDs that should be the source of truth.
+questions:
+  - id: q01
+    question: "Does the agreement terminate on a change of control?"
+    expected_clause_types: [change_of_control]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q02
+    question: "Who owns intellectual property created during the engagement?"
+    expected_clause_types: [ip_assignment]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q03
+    question: "What is the governing law of the agreement?"
+    expected_clause_types: [governing_law]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q04
+    question: "Is there an exclusivity restriction on the contractor?"
+    expected_clause_types: [exclusivity]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q05
+    question: "What are the termination conditions?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q06
+    question: "Does the contractor indemnify the customer?"
+    expected_clause_types: [indemnity]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q07
+    question: "What constitutes a Change of Control under this Agreement?"
+    expected_clause_types: [change_of_control]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q08
+    question: "How much notice is required to terminate for cause?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q09
+    question: "Are moral rights assigned along with intellectual property?"
+    expected_clause_types: [ip_assignment]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1
+  - id: q10
+    question: "Which courts have jurisdiction over disputes?"
+    expected_clause_types: [governing_law]
+    expected_doc_ids: [doc_demo000000]
+    must_cite_spans: 1

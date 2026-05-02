@@ -1,0 +1,224 @@
+openapi: 3.1.0
+info:
+  title: Lexscribe API
+  version: 0.1.0
+  description: |
+    M&A diligence copilot. Upload contracts, get span-cited answers.
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+    description: local
+
+paths:
+  /livez:
+    get:
+      summary: Liveness probe
+      responses:
+        "200": { description: alive }
+  /healthz:
+    get:
+      summary: Deep health check (postgres, redis, s3, provider)
+      responses:
+        "200": { description: ok-or-degraded }
+
+  /documents:
+    post:
+      summary: Initiate a new document upload (returns presigned S3 URL)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateDocumentRequest" }
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateDocumentResponse" }
+        "422":
+          $ref: "#/components/responses/Error"
+    get:
+      summary: List documents (cursor-paginated)
+      parameters:
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        "200":
+          description: page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DocumentList" }
+
+  /documents/{doc_id}/spans:
+    get:
+      summary: List extracted spans for a document
+      parameters:
+        - in: path
+          name: doc_id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+      responses:
+        "200":
+          description: page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SpanList" }
+        "404":
+          $ref: "#/components/responses/Error"
+
+  /qa:
+    post:
+      summary: Ask a question grounded in indexed documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QARequest" }
+      responses:
+        "200":
+          description: answer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QAResponse" }
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+
+components:
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required: [code, message, retryable]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        retryable: { type: boolean }
+        request_id: { type: string }
+        details: { type: object, additionalProperties: true }
+
+    CreateDocumentRequest:
+      type: object
+      required: [filename, sha256]
+      properties:
+        filename: { type: string, minLength: 1, maxLength: 512 }
+        content_type: { type: string, default: application/pdf }
+        sha256: { type: string, minLength: 64, maxLength: 64 }
+
+    CreateDocumentResponse:
+      type: object
+      required: [document_id, upload_url, s3_key, expires_in]
+      properties:
+        document_id: { type: string }
+        upload_url: { type: string, format: uri }
+        s3_key: { type: string }
+        expires_in: { type: integer }
+
+    DocumentListItem:
+      type: object
+      required: [id, filename, sha256, status, current_version]
+      properties:
+        id: { type: string }
+        filename: { type: string }
+        sha256: { type: string }
+        status:
+          type: string
+          enum: [pending, parsing, embedding, classifying, active, failed]
+        current_version: { type: integer, minimum: 1 }
+        page_count: { type: integer, nullable: true }
+
+    DocumentList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DocumentListItem" }
+        next_cursor: { type: string, nullable: true }
+
+    SpanItem:
+      type: object
+      required: [page_no, char_start, char_end, clause_type, text]
+      properties:
+        page_no: { type: integer, minimum: 1 }
+        char_start: { type: integer, minimum: 0 }
+        char_end: { type: integer, minimum: 0 }
+        clause_type:
+          type: string
+          enum:
+            - change_of_control
+            - ip_assignment
+            - exclusivity
+            - termination
+            - indemnity
+            - governing_law
+            - other
+        text: { type: string }
+
+    SpanList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SpanItem" }
+        next_cursor: { type: string, nullable: true }
+
+    Citation:
+      type: object
+      required: [doc_id, version, page, char_start, char_end, score]
+      properties:
+        doc_id: { type: string }
+        version: { type: integer, minimum: 1 }
+        page: { type: integer, minimum: 1 }
+        char_start: { type: integer, minimum: 0 }
+        char_end: { type: integer, minimum: 0 }
+        score: { type: number, minimum: 0, maximum: 1 }
+
+    Usage:
+      type: object
+      required: [tokens_in, tokens_out, cost_usd]
+      properties:
+        tokens_in: { type: integer, minimum: 0 }
+        tokens_out: { type: integer, minimum: 0 }
+        cost_usd: { type: number, minimum: 0 }
+
+    QARequest:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string, minLength: 1, maxLength: 4000 }
+        doc_ids:
+          type: array
+          items: { type: string }
+          nullable: true
+        k: { type: integer, minimum: 1, maximum: 32, default: 8 }
+
+    QAResponse:
+      type: object
+      required: [answer, citations, usage, model_version]
+      properties:
+        answer: { type: string }
+        citations:
+          type: array
+          items: { $ref: "#/components/schemas/Citation" }
+        usage: { $ref: "#/components/schemas/Usage" }
+        model_version: { type: string }
+
+  responses:
+    Error:
+      description: error envelope
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
