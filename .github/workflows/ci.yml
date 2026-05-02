@@ -126,7 +126,7 @@ jobs:
           context: .
           file: Dockerfile.api
           push: false
-          tags: ghcr.io/${{ github.repository_owner }}/lexscribe-api:${{ github.sha }}
+          tags: ghcr.io/say-5/lexscribe-api:${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
@@ -136,7 +136,7 @@ jobs:
           context: .
           file: Dockerfile.worker
           push: false
-          tags: ghcr.io/${{ github.repository_owner }}/lexscribe-worker:${{ github.sha }}
+          tags: ghcr.io/say-5/lexscribe-worker:${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha,scope=worker
           cache-to: type=gha,scope=worker,mode=max
