@@ -9,18 +9,39 @@ Why in-memory? Two reasons:
 
 The DB-backed equivalent lives in ``lexscribe_api.repos.retrieval`` and emits
 the same ``ScoredChunk`` shape so callers do not branch.
+
+Sub-millisecond stage timings are recorded into a per-stage HDR histogram
+on every call. Bench harnesses and the API metrics endpoint read these
+HDR percentiles directly; Prometheus exposition is generated on scrape via
+``HdrHistogram.export_prometheus``.
 """
 
 from __future__ import annotations
 
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
+from lexscribe_shared.hdr import HdrHistogram
 from rank_bm25 import BM25Okapi
 
 from lexscribe_retrieval.fusion import reciprocal_rank_fusion
 from lexscribe_retrieval.rerank import HeuristicReranker, Reranker
+
+# Module-level HDR histograms so every searcher in the process feeds the
+# same metric — matches the Prometheus default-registry singleton pattern.
+STAGE_HDR: dict[str, HdrHistogram] = {
+    "bm25": HdrHistogram(),
+    "dense": HdrHistogram(),
+    "fusion": HdrHistogram(),
+    "rerank": HdrHistogram(),
+}
+
+
+def _record_stage(stage: str, started: float) -> None:
+    elapsed_us = int((time.perf_counter() - started) * 1_000_000)
+    STAGE_HDR[stage].record(elapsed_us)
 
 
 @dataclass(frozen=True)
@@ -75,25 +96,33 @@ class HybridSearcher:
         if not self._chunks or self._bm25 is None:
             return []
         # BM25 ranking
+        t0 = time.perf_counter()
         bm25_scores = self._bm25.get_scores(query.lower().split())
         bm25_order = sorted(range(len(self._chunks)), key=lambda i: bm25_scores[i], reverse=True)[
             :candidate_pool
         ]
+        _record_stage("bm25", t0)
         # Dense ranking
+        t0 = time.perf_counter()
         q_emb = self._embedder.embed([query])[0]
         dense_scores = [_cosine(q_emb, c.embedding) for c in self._chunks]
         dense_order = sorted(range(len(self._chunks)), key=lambda i: dense_scores[i], reverse=True)[
             :candidate_pool
         ]
+        _record_stage("dense", t0)
         # Fuse
+        t0 = time.perf_counter()
         fused = reciprocal_rank_fusion([bm25_order, dense_order])
         top_n = [idx for idx, _ in fused[:candidate_pool]]
+        _record_stage("fusion", t0)
         if not top_n:
             return []
         # Rerank top pool down to k
+        t0 = time.perf_counter()
         candidates_text = [self._chunks[i].text for i in top_n]
         rerank_scores = self._reranker.rerank(query, candidates_text)
         ranked = sorted(zip(top_n, rerank_scores, strict=False), key=lambda x: x[1], reverse=True)[
             :k
         ]
+        _record_stage("rerank", t0)
         return [ScoredChunk(chunk=self._chunks[i], score=float(s)) for i, s in ranked]

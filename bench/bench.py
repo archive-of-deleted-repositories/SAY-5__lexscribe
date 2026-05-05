@@ -51,7 +51,7 @@ for _sub in (
 from faker import Faker  # noqa: E402
 from lexscribe_api.qa_service import _chunk_to_citation  # noqa: E402
 from lexscribe_retrieval.chunker import chunk_pages  # noqa: E402
-from lexscribe_retrieval.search import HybridSearcher, IndexedChunk  # noqa: E402
+from lexscribe_retrieval.search import STAGE_HDR, HybridSearcher, IndexedChunk  # noqa: E402
 from lexscribe_shared.costing import CostRates, turn_cost  # noqa: E402
 from lexscribe_shared.providers import (  # noqa: E402
     FakeEmbeddingProvider,
@@ -190,7 +190,15 @@ def run_queries(
     timings: StageTimings,
     seed: int,
 ) -> None:
-    """Drive ``n_queries`` end-to-end Q&A turns through the in-process searcher."""
+    """Drive ``n_queries`` end-to-end Q&A turns through the in-process searcher.
+
+    Retrieval stage timings (bm25/dense/fusion/rerank) are recorded into the
+    module-level HDR histogram inside ``HybridSearcher.search`` — the bench
+    reads them from ``STAGE_HDR`` for the percentile table. End-to-end Q&A
+    latency stays on the float list because the populated value range is
+    above the HDR microsecond floor and the cost-per-turn line still wants
+    the raw samples.
+    """
 
     rng = random.Random(seed)
     settings = get_settings()
@@ -201,57 +209,21 @@ def run_queries(
     )
     llm = FakeLLMProvider()
 
+    # Reset HDR so multi-run benches produce isolated numbers.
+    for hdr in STAGE_HDR.values():
+        hdr.reset()
+
     for _ in range(n_queries):
         q = rng.choice(QUERIES)
         t_e2e = time.perf_counter()
 
-        # Sub-stage timings inside HybridSearcher.search are not directly
-        # exposed; we reproduce the BM25/dense/fusion/rerank shape here so
-        # the bench has visibility. Total still equals end-to-end.
-        from lexscribe_retrieval.fusion import reciprocal_rank_fusion
-        from lexscribe_retrieval.search import _cosine
-
-        chunks_list = searcher._chunks  # type: ignore[attr-defined]
-        bm25 = searcher._bm25  # type: ignore[attr-defined]
-        embedder = searcher._embedder  # type: ignore[attr-defined]
-        reranker = searcher._reranker  # type: ignore[attr-defined]
-        if not chunks_list or bm25 is None:
+        hits = searcher.search(q, k=8, candidate_pool=50)
+        if not hits:
             continue
 
-        t = time.perf_counter()
-        bm25_scores = bm25.get_scores(q.lower().split())
-        bm25_order = sorted(range(len(chunks_list)), key=lambda i: bm25_scores[i], reverse=True)[
-            :50
-        ]
-        timings.bm25.append((time.perf_counter() - t) * 1000.0)
-
-        t = time.perf_counter()
-        q_emb = embedder.embed([q])[0]
-        dense_scores = [_cosine(q_emb, c.embedding) for c in chunks_list]
-        dense_order = sorted(range(len(chunks_list)), key=lambda i: dense_scores[i], reverse=True)[
-            :50
-        ]
-        timings.dense.append((time.perf_counter() - t) * 1000.0)
-
-        t = time.perf_counter()
-        fused = reciprocal_rank_fusion([bm25_order, dense_order])
-        top_n = [idx for idx, _ in fused[:50]]
-        timings.fusion.append((time.perf_counter() - t) * 1000.0)
-
-        t = time.perf_counter()
-        candidates_text = [chunks_list[i].text for i in top_n]
-        rerank_scores = reranker.rerank(q, candidates_text)
-        ranked = sorted(zip(top_n, rerank_scores, strict=False), key=lambda x: x[1], reverse=True)[
-            :8
-        ]
-        timings.rerank.append((time.perf_counter() - t) * 1000.0)
-
         # Provider call + citation packing — the rest of an end-to-end turn
-        chunk_texts = tuple(chunks_list[i].text for i, _ in ranked)
-        pool = [
-            _chunk_to_citation(chunks_list[i].chunk_id, chunks_list[i].text, float(s))
-            for i, s in ranked
-        ]
+        chunk_texts = tuple(h.chunk.text for h in hits)
+        pool = [_chunk_to_citation(h.chunk.chunk_id, h.chunk.text, h.score) for h in hits]
         gen = llm.generate(
             GenerationRequest(
                 system="Answer using only the supplied excerpts. Cite by index.",
@@ -279,6 +251,29 @@ def _summarise_stage(name: str, values: list[float]) -> dict[str, float]:
     }
 
 
+def _summarise_hdr_stage(name: str) -> dict[str, float]:
+    """Read percentiles for a retrieval stage from STAGE_HDR (microseconds)."""
+    hdr = STAGE_HDR[name]
+    pcts = hdr.percentiles(0.50, 0.95, 0.99, 0.999)
+    counts = hdr._snapshot()  # type: ignore[attr-defined]
+    last_idx = max((i for i, c in enumerate(counts) if c > 0), default=-1)
+    if last_idx >= 0:
+        from lexscribe_shared.hdr import _bucket_upper_bound
+
+        max_us = _bucket_upper_bound(last_idx) - 1
+    else:
+        max_us = 0
+    return {
+        "stage": name,
+        "n": hdr.total_count(),
+        "p50_us": pcts[0.50],
+        "p95_us": pcts[0.95],
+        "p99_us": pcts[0.99],
+        "p999_us": pcts[0.999],
+        "max_us": max_us,
+    }
+
+
 def _format_table(rows: list[dict[str, float]]) -> str:
     headers = ("stage", "p50", "p95", "p99", "p999", "max")
     widths = (10, 7, 7, 7, 7, 7)
@@ -293,6 +288,26 @@ def _format_table(rows: list[dict[str, float]]) -> str:
                     f"{r['p99']:.2f}".ljust(widths[3]),
                     f"{r['p999']:.2f}".ljust(widths[4]),
                     f"{r['max']:.2f}".ljust(widths[5]),
+                ]
+            )
+        )
+    return "\n".join(out_lines)
+
+
+def _format_hdr_table(rows: list[dict[str, float]]) -> str:
+    headers = ("stage", "p50", "p95", "p99", "p999", "max")
+    widths = (10, 7, 7, 7, 7, 7)
+    out_lines = ["  ".join(h.ljust(w) for h, w in zip(headers, widths, strict=False))]
+    for r in rows:
+        out_lines.append(
+            "  ".join(
+                [
+                    str(r["stage"]).ljust(widths[0]),
+                    f"{int(r['p50_us'])}".ljust(widths[1]),
+                    f"{int(r['p95_us'])}".ljust(widths[2]),
+                    f"{int(r['p99_us'])}".ljust(widths[3]),
+                    f"{int(r['p999_us'])}".ljust(widths[4]),
+                    f"{int(r['max_us'])}".ljust(widths[5]),
                 ]
             )
         )
@@ -317,9 +332,7 @@ def _print_report(
     ingest_rows = [
         _summarise_stage(s, getattr(timings, s)) for s in ("parse", "chunk", "embed", "classify")
     ]
-    retr_rows = [
-        _summarise_stage(s, getattr(timings, s)) for s in ("bm25", "dense", "fusion", "rerank")
-    ]
+    retr_rows_hdr = [_summarise_hdr_stage(s) for s in ("bm25", "dense", "fusion", "rerank")]
     e2e = _summarise_stage("e2e_qa", timings.end_to_end_qa)
 
     lines = [
@@ -331,8 +344,8 @@ def _print_report(
         f"chunks     : {n_chunks}",
         "## per-stage latency (ms)",
         _format_table(ingest_rows),
-        "## retrieval latency (ms)",
-        _format_table(retr_rows),
+        "## retrieval latency (us, HDR log-bucketed)",
+        _format_hdr_table(retr_rows_hdr),
         "## end-to-end Q&A latency (ms)",
         _format_table([e2e]),
         "## cost per turn (USD, FakeProvider — for accounting shape, not real cost)",
@@ -385,9 +398,8 @@ def run_bench(scale: str, *, seed: int = 1234) -> dict[str, object]:
             s: _summarise_stage(s, getattr(timings, s))
             for s in ("parse", "chunk", "embed", "classify")
         },
-        "retrieval_stage_ms": {
-            s: _summarise_stage(s, getattr(timings, s))
-            for s in ("bm25", "dense", "fusion", "rerank")
+        "retrieval_stage_us_hdr": {
+            s: _summarise_hdr_stage(s) for s in ("bm25", "dense", "fusion", "rerank")
         },
         "end_to_end_qa_ms": _summarise_stage("e2e_qa", timings.end_to_end_qa),
         "cost_per_turn_usd": {
