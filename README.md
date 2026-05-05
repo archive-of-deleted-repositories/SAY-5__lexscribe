@@ -17,6 +17,19 @@ eval harness that gates retrieval and faithfulness in CI.
   generation/embedding call goes through a `Provider` Protocol with a
   deterministic `FakeProvider` that runs in CI.
 
+## Baseline results
+
+| n  | precision@1 | recall@5 | faithfulness | refusal_rate | p95_latency_s | cost_usd_avg |
+|----|------------:|---------:|-------------:|-------------:|--------------:|-------------:|
+| 10 | 1.00        | 1.00     | 0.00         | 0.00         | 0.0003        | 0.000953     |
+
+FakeProvider hermetic baseline, M-series Mac. See `eval/baselines/` for the
+source artifact (`mna_v1_fake.json`) and methodology notes. Run
+`make bench-eval` to reproduce. `faithfulness` is `0.00` by construction here
+because the FakeProvider returns canned answers that do not echo retrieved
+text — the rubric requires word overlap with citations. Live-LLM numbers
+require BYOK; see the "Live Eval (BYOK)" section below.
+
 ## Layout
 
 ```
@@ -87,10 +100,9 @@ make dev                     # uvicorn on :8080
 | Cost per Q&A turn | < $0.04 |
 
 These are design targets that the eval harness is set up to measure. CI runs
-the eval suite with `FakeProvider` (smoke only, accuracy gates skipped). To
-measure against a real provider, set `LEXSCRIBE_ANTHROPIC_API_KEY` and run
-`lexscribe eval run --suite mna_v1 --provider anthropic` locally — see
-`packages/eval/lexscribe_eval/runner.py` for the wiring point.
+the eval suite with `FakeProvider` (smoke only, accuracy gates skipped); the
+hermetic baseline above is the only number checked in. Live-provider numbers
+go in the "Live Eval (BYOK)" section below.
 
 ## Reproducing the benchmark
 
@@ -165,6 +177,27 @@ CI runs `lint`, `typecheck`, `test` (Python 3.11 + 3.12 matrix), `contract`,
   a hard CI dependency.
 * **Trivy / SBOM** — left out of CI to keep the green build under five
   minutes; `release.yml` is the natural home for them.
+
+## Live Eval (BYOK)
+
+The hermetic baseline above uses `FakeLLMProvider` and exercises only the
+retrieval pipeline. To measure real generation quality (faithfulness,
+refusal rate, real latency, real cost) against a live model, use BYOK:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+mkdir -p eval/runs
+lexscribe eval run \
+  --suite mna_v1 \
+  --provider anthropic \
+  --model claude-sonnet-4-7 \
+  --output eval/runs/$(date -u +%Y%m%dT%H%M%SZ).json
+```
+
+Rough cost: ~$1–3 for a full `mna_v1` run on Sonnet 4.7, depending on
+retrieval depth and answer length. Numbers are not committed to the repo;
+keep them in `eval/runs/` (gitignored) or a private notebook. The wiring
+point for adding new providers is `packages/eval/lexscribe_eval/runner.py`.
 
 ## License
 
