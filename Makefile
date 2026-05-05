@@ -1,4 +1,4 @@
-.PHONY: dev fmt lint typecheck test test-unit test-integration migrate seed eval bench clean install
+.PHONY: dev fmt lint typecheck test test-unit test-integration migrate seed eval bench bench-eval clean install
 
 PY ?= python3
 VENV ?= .venv
@@ -48,6 +48,10 @@ eval:
 
 bench:
 	bash bench.sh
+
+bench-eval:
+	mkdir -p eval/runs
+	$(BIN)/lexscribe eval run --suite mna_v1 --provider fake --output eval/runs/$(shell date -u +%Y%m%dT%H%M%SZ).json
 
 clean:
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +
