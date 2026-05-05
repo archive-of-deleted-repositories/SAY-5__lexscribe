@@ -48,7 +48,7 @@ def test_small_scale_runs_and_writes_artifact(tmp_path: Path) -> None:
         "docs_per_sec",
         "chunks_per_sec",
         "ingest_stage_ms",
-        "retrieval_stage_ms",
+        "retrieval_stage_us_hdr",
         "end_to_end_qa_ms",
         "cost_per_turn_usd",
         "report",
@@ -58,7 +58,8 @@ def test_small_scale_runs_and_writes_artifact(tmp_path: Path) -> None:
         assert stage in payload["ingest_stage_ms"]
         assert "p50" in payload["ingest_stage_ms"][stage]
     for stage in ("bm25", "dense", "fusion", "rerank"):
-        assert stage in payload["retrieval_stage_ms"]
+        assert stage in payload["retrieval_stage_us_hdr"]
+        assert "p50_us" in payload["retrieval_stage_us_hdr"][stage]
     assert payload["scale"] == "small"
     assert payload["n_docs"] == 10
     assert payload["n_queries"] == 50
