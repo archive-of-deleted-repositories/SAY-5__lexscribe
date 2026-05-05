@@ -124,7 +124,7 @@ module = ["tests.*", "alembic.*"]
 ignore_errors = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "bench"]
 asyncio_mode = "auto"
 markers = [
     "integration: requires postgres/redis/minio (gate with RUN_INTEGRATION=1)",
