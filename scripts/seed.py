@@ -88,6 +88,11 @@ def main() -> None:
     parser.add_argument("--count", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--print", action="store_true", help="dry-run; print first contract")
+    parser.add_argument(
+        "--with-edgar",
+        action="store_true",
+        help="also fetch the 5 real EDGAR merger agreements via seed_edgar",
+    )
     args = parser.parse_args()
 
     Faker.seed(args.seed)
@@ -105,6 +110,12 @@ def main() -> None:
 
     # DB insertion path is intentionally minimal; integration tests cover it.
     print(f"Generated {len(contracts)} contracts (dry-run; pass to a worker to ingest).")
+
+    if args.with_edgar:
+        # Lazy import; seed_edgar pulls from sec.gov on first run.
+        import seed_edgar  # type: ignore[import-not-found]
+
+        seed_edgar.main()
 
 
 if __name__ == "__main__":

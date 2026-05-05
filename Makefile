@@ -1,4 +1,4 @@
-.PHONY: dev fmt lint typecheck test test-unit test-integration migrate seed eval bench bench-eval clean install
+.PHONY: dev fmt lint typecheck test test-unit test-integration migrate seed seed-edgar eval bench bench-eval clean install
 
 PY ?= python3
 VENV ?= .venv
@@ -43,10 +43,18 @@ migrate-down:
 seed:
 	$(BIN)/python scripts/seed.py
 
+seed-edgar:
+	$(BIN)/python scripts/seed_edgar.py
+
 eval:
 	$(BIN)/lexscribe eval run --suite mna_v1 --provider fake --output runs/local-$(shell date +%s).json
 
+SCALE ?= small
 bench:
+	mkdir -p bench/results
+	$(BIN)/python bench/bench.py --scale $(SCALE)
+
+bench-legacy:
 	bash bench.sh
 
 bench-eval:

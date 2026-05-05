@@ -63,6 +63,19 @@ local_data/
 .env.*
 !.env.example
 
+# EDGAR cache — public docs, but bulky; MANIFEST.md commits the URLs instead
+scripts/data/edgar/*.html
+scripts/data/edgar/*.htm
+scripts/data/edgar/*.txt
+scripts/data/edgar/*.pdf
+
+# Bench results are environment-dependent. We commit only the named
+# baseline artifact that the README quotes from; everything else is
+# ignored.
+bench/results/*.json
+!bench/results/.gitkeep
+!bench/results/baseline_small.json
+
 # Docker
 .docker/
 

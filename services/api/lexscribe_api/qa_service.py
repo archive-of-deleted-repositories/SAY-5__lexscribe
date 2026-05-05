@@ -52,6 +52,43 @@ _DEMO_PAGES: list[tuple[int, str]] = [
 ]
 
 
+def _chunk_to_citation(chunk_id: str, text: str, score: float) -> Citation:
+    """Decode a structured ``chunk_id`` back to citation coordinates.
+
+    Two formats are supported:
+
+    * ``"<doc_id>::p<n>"`` — legacy demo corpus, no per-chunk char range.
+    * ``"<doc_id>::p<n>::<char_start>-<char_end>"`` — produced by the
+      EDGAR seed and the worker DAG.
+    """
+
+    parts = chunk_id.split("::")
+    doc_id = parts[0]
+    page = 1
+    char_start = 0
+    char_end = len(text)
+    if len(parts) >= 2 and parts[1].startswith("p"):
+        try:
+            page = int(parts[1][1:] or 1)
+        except ValueError:
+            page = 1
+    if len(parts) >= 3 and "-" in parts[2]:
+        a, _, b = parts[2].partition("-")
+        try:
+            char_start = int(a)
+            char_end = int(b)
+        except ValueError:
+            pass
+    return Citation(
+        doc_id=doc_id,
+        version=1,
+        page=page,
+        char_start=char_start,
+        char_end=char_end,
+        score=score,
+    )
+
+
 @lru_cache(maxsize=1)
 def default_corpus() -> HybridSearcher:
     embedder: EmbeddingProvider = FakeEmbeddingProvider(dim=128)
@@ -79,17 +116,7 @@ def answer_question(
 
     hits = searcher.search(req.question, k=req.k)
     chunks = tuple(h.chunk.text for h in hits)
-    citations_pool = [
-        Citation(
-            doc_id=h.chunk.chunk_id.split("::")[0],
-            version=1,
-            page=int(h.chunk.chunk_id.split("p")[-1] or 1),
-            char_start=0,
-            char_end=len(h.chunk.text),
-            score=h.score,
-        )
-        for h in hits
-    ]
+    citations_pool = [_chunk_to_citation(h.chunk.chunk_id, h.chunk.text, h.score) for h in hits]
     gen_req = GenerationRequest(
         system="Answer using only the supplied excerpts. Cite by index.",
         user=req.question,
