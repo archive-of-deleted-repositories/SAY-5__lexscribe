@@ -1,0 +1,82 @@
+name: mna_real_v1
+version: 1
+description: |
+  Ten hand-written diligence questions over the five real EDGAR merger
+  agreements ingested by `scripts/seed_edgar.py`. Each entry pins the
+  expected document(s) and a verified `(page, char_start, char_end)`
+  citation range. Coordinates are in the synthetic-pagination scheme
+  defined in `scripts/seed_edgar.py:paginate` — page = floor(abs_offset
+  / 4000) + 1, char offsets relative to the start of that page.
+  See `scripts/data/edgar/MANIFEST.md` for source URLs.
+
+corpus: edgar
+questions:
+  - id: r01
+    question: "What is the termination fee Activision would owe Microsoft if Activision accepts a superior proposal?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_msft_atvi_2022]
+    must_cite_spans:
+      - { page: 75, char_start_approx: 3115, char_end_approx: 3182 }
+
+  - id: r02
+    question: "What is the maximum Parent Termination Fee that Microsoft would owe Activision under the merger agreement?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_msft_atvi_2022]
+    must_cite_spans:
+      - { page: 76, char_start_approx: 1370, char_end_approx: 1469 }
+
+  - id: r03
+    question: "What law governs the Microsoft/Activision merger agreement?"
+    expected_clause_types: [governing_law]
+    expected_doc_ids: [doc_msft_atvi_2022]
+    must_cite_spans:
+      - { page: 79, char_start_approx: 1434, char_end_approx: 1532 }
+
+  - id: r04
+    question: "What termination fee would Seagen pay Pfizer if Seagen terminates to accept a superior proposal?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_pfe_seagen_2023]
+    must_cite_spans:
+      - { page: 63, char_start_approx: 45, char_end_approx: 96 }
+
+  - id: r05
+    question: "What is the Reverse Termination Fee Pfizer would owe Seagen if the deal fails on antitrust grounds?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_pfe_seagen_2023]
+    must_cite_spans:
+      - { page: 64, char_start_approx: 487, char_end_approx: 546 }
+
+  - id: r06
+    question: "Under what conditions can either party terminate the Pfizer/Seagen merger agreement before closing?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_pfe_seagen_2023]
+    must_cite_spans:
+      - { page: 61, char_start_approx: 1723, char_end_approx: 1831 }
+
+  - id: r07
+    question: "What is the Company Termination Fee in the Cisco/Splunk merger agreement?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_csco_splk_2023]
+    must_cite_spans:
+      - { page: 80, char_start_approx: 549, char_end_approx: 618 }
+
+  - id: r08
+    question: "What is the governing law specified in the Cisco/Splunk merger agreement?"
+    expected_clause_types: [governing_law]
+    expected_doc_ids: [doc_csco_splk_2023]
+    must_cite_spans:
+      - { page: 84, char_start_approx: 3437, char_end_approx: 3560 }
+
+  - id: r09
+    question: "What termination fee would Pioneer pay ExxonMobil if Pioneer terminates to accept a superior proposal?"
+    expected_clause_types: [termination]
+    expected_doc_ids: [doc_xom_pxd_2023]
+    must_cite_spans:
+      - { page: 73, char_start_approx: 1001, char_end_approx: 1042 }
+
+  - id: r10
+    question: "What law governs the Disney/Pixar merger agreement?"
+    expected_clause_types: [governing_law]
+    expected_doc_ids: [doc_dis_pixar_2006]
+    must_cite_spans:
+      - { page: 52, char_start_approx: 2853, char_end_approx: 2942 }
