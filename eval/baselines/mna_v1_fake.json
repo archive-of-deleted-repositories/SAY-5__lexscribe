@@ -1,0 +1,296 @@
+{
+  "suite": "mna_v1",
+  "provider": "fake",
+  "model": "fake-1",
+  "metrics": {
+    "n": 10,
+    "precision_at_1": 1.0,
+    "recall_at_5": 1.0,
+    "faithfulness": 0.0,
+    "refusal_rate": 0.0,
+    "cost_usd_avg": 0.0009528,
+    "p95_latency_seconds": 0.0002737909962888807
+  },
+  "rows": [
+    {
+      "question_id": "q01",
+      "question": "Does the agreement terminate on a change of control?",
+      "expected_clause_types": [
+        "change_of_control"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "This Agreement shall terminate automatically upon a Change of Control of either party, defined as the acquisition of more than fifty percent (50%) of the outstanding voting securities by a single entity. Notice of any such event shall be",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 1,
+          "char_start": 0,
+          "char_end": 274,
+          "score": 0.75
+        }
+      ],
+      "usage": {
+        "tokens_in": 137,
+        "tokens_out": 39,
+        "cost_usd": 0.000996
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.0002737909962888807
+    },
+    {
+      "question_id": "q02",
+      "question": "Who owns intellectual property created during the engagement?",
+      "expected_clause_types": [
+        "ip_assignment"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "All Intellectual Property created by Contractor in the course of performing Services hereunder shall vest in Customer upon creation. Contractor hereby assigns all right, title, and interest, including moral rights to the extent permitted",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 2,
+          "char_start": 0,
+          "char_end": 288,
+          "score": 0.5
+        }
+      ],
+      "usage": {
+        "tokens_in": 136,
+        "tokens_out": 34,
+        "cost_usd": 0.0009180000000000001
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.0002048330061370507
+    },
+    {
+      "question_id": "q03",
+      "question": "What is the governing law of the agreement?",
+      "expected_clause_types": [
+        "governing_law"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict-of-laws principles. The parties consent to the exclusive jurisdiction of the state and federal courts",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 3,
+          "char_start": 0,
+          "char_end": 269,
+          "score": 0.42857142857142855
+        }
+      ],
+      "usage": {
+        "tokens_in": 136,
+        "tokens_out": 37,
+        "cost_usd": 0.000963
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.00018791601178236306
+    },
+    {
+      "question_id": "q04",
+      "question": "Is there an exclusivity restriction on the contractor?",
+      "expected_clause_types": [
+        "exclusivity"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "All Intellectual Property created by Contractor in the course of performing Services hereunder shall vest in Customer upon creation. Contractor hereby assigns all right, title, and interest, including moral rights to the extent permitted",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 2,
+          "char_start": 0,
+          "char_end": 288,
+          "score": 0.25
+        }
+      ],
+      "usage": {
+        "tokens_in": 136,
+        "tokens_out": 34,
+        "cost_usd": 0.0009180000000000001
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.00017537499661557376
+    },
+    {
+      "question_id": "q05",
+      "question": "What are the termination conditions?",
+      "expected_clause_types": [
+        "termination"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict-of-laws principles. The parties consent to the exclusive jurisdiction of the state and federal courts",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 3,
+          "char_start": 0,
+          "char_end": 269,
+          "score": 0.2
+        }
+      ],
+      "usage": {
+        "tokens_in": 133,
+        "tokens_out": 37,
+        "cost_usd": 0.000954
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.0001580420066602528
+    },
+    {
+      "question_id": "q06",
+      "question": "Does the contractor indemnify the customer?",
+      "expected_clause_types": [
+        "indemnity"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "All Intellectual Property created by Contractor in the course of performing Services hereunder shall vest in Customer upon creation. Contractor hereby assigns all right, title, and interest, including moral rights to the extent permitted",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 2,
+          "char_start": 0,
+          "char_end": 288,
+          "score": 0.6
+        }
+      ],
+      "usage": {
+        "tokens_in": 134,
+        "tokens_out": 34,
+        "cost_usd": 0.000912
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.00015758299559820443
+    },
+    {
+      "question_id": "q07",
+      "question": "What constitutes a Change of Control under this Agreement?",
+      "expected_clause_types": [
+        "change_of_control"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "This Agreement shall terminate automatically upon a Change of Control of either party, defined as the acquisition of more than fifty percent (50%) of the outstanding voting securities by a single entity. Notice of any such event shall be",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 1,
+          "char_start": 0,
+          "char_end": 274,
+          "score": 0.625
+        }
+      ],
+      "usage": {
+        "tokens_in": 137,
+        "tokens_out": 39,
+        "cost_usd": 0.000996
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.00017191599181387573
+    },
+    {
+      "question_id": "q08",
+      "question": "How much notice is required to terminate for cause?",
+      "expected_clause_types": [
+        "termination"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "This Agreement shall terminate automatically upon a Change of Control of either party, defined as the acquisition of more than fifty percent (50%) of the outstanding voting securities by a single entity. Notice of any such event shall be",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 1,
+          "char_start": 0,
+          "char_end": 274,
+          "score": 0.2222222222222222
+        }
+      ],
+      "usage": {
+        "tokens_in": 137,
+        "tokens_out": 39,
+        "cost_usd": 0.000996
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.00018399998953100294
+    },
+    {
+      "question_id": "q09",
+      "question": "Are moral rights assigned along with intellectual property?",
+      "expected_clause_types": [
+        "ip_assignment"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "All Intellectual Property created by Contractor in the course of performing Services hereunder shall vest in Customer upon creation. Contractor hereby assigns all right, title, and interest, including moral rights to the extent permitted",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 2,
+          "char_start": 0,
+          "char_end": 288,
+          "score": 0.5
+        }
+      ],
+      "usage": {
+        "tokens_in": 136,
+        "tokens_out": 34,
+        "cost_usd": 0.0009180000000000001
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.0001705839968053624
+    },
+    {
+      "question_id": "q10",
+      "question": "Which courts have jurisdiction over disputes?",
+      "expected_clause_types": [
+        "governing_law"
+      ],
+      "expected_doc_ids": [
+        "doc_demo000000"
+      ],
+      "answer": "This Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict-of-laws principles. The parties consent to the exclusive jurisdiction of the state and federal courts",
+      "citations": [
+        {
+          "doc_id": "doc_demo000000",
+          "version": 1,
+          "page": 3,
+          "char_start": 0,
+          "char_end": 269,
+          "score": 0.3333333333333333
+        }
+      ],
+      "usage": {
+        "tokens_in": 134,
+        "tokens_out": 37,
+        "cost_usd": 0.000957
+      },
+      "model_version": "fake-1",
+      "latency_seconds": 0.00015570901450701058
+    }
+  ]
+}
