@@ -154,31 +154,43 @@ go in the "Live Eval (BYOK)" section below.
 
 `bench/bench.py` measures the chunk → embed → search → answer pipeline at
 three preset scales (10 / 100 / 1000 docs) and prints a columnar latency
-table. Numbers below come from `bench/results/baseline_small.json`.
+table. Retrieval stages are now log-bucketed by
+[`lexscribe_shared.hdr.HdrHistogram`](packages/shared/lexscribe_shared/hdr.py)
+so the per-stage table reports microsecond resolution; ingestion and
+end-to-end Q&A still use float lists because their values sit comfortably
+above the 1us HDR floor. Numbers below come from
+`bench/results/baseline_small.json`.
 
 ```
 # lexscribe bench — small (10 docs, 50 queries)
-# 20260505T232117Z, fake-provider, in-process
+# 20260505T234516Z, fake-provider, in-process
 ## ingestion
-docs/sec   : 326.09
-chunks/sec : 2282.62
+docs/sec   : 336.37
+chunks/sec : 2354.58
 chunks     : 70
 ## per-stage latency (ms)
 stage       p50      p95      p99      p999     max
-parse       0.50     0.70     0.70     0.70     0.70
-chunk       0.18     0.21     0.21     0.21     0.21
-embed       0.11     0.15     0.15     0.15     0.15
-classify    0.02     0.03     0.03     0.03     0.03
-## retrieval latency (ms)
+parse       0.50     0.64     0.64     0.64     0.64
+chunk       0.18     0.22     0.22     0.22     0.22
+embed       0.11     0.14     0.14     0.14     0.14
+classify    0.02     0.04     0.04     0.04     0.04
+## retrieval latency (us, HDR log-bucketed)
 stage       p50      p95      p99      p999     max
-bm25        0.08     0.13     0.16     0.16     0.16
-dense       0.55     0.59     0.62     0.62     0.62
-fusion      0.01     0.02     0.04     0.04     0.04
-rerank      0.80     0.92     0.97     0.97     0.97
+bm25        78       86       114      114      115
+dense       528      560      560      560      575
+fusion      12       14       20       20       20
+rerank      752      784      816      816      831
 ## end-to-end Q&A latency (ms)
 stage       p50      p95      p99      p999     max
-e2e_qa      1.50     1.70     1.85     1.85     1.85
+e2e_qa      1.44     1.49     1.58     1.58     1.58
 ```
+
+`HybridSearcher.search` records into the same module-level HDR
+histograms that the API's `/metrics` endpoint exposes, so production
+scrapes get microsecond-resolution percentiles for `bm25`, `dense`,
+`fusion`, and `rerank` via `HdrHistogram.export_prometheus`. The
+end-to-end Q&A latency stays on the existing Prometheus `Histogram` —
+its 0.25–8s buckets are appropriate for that scale.
 
 Local-machine numbers on M-series Mac. Reproduce with `make bench`. See
 [bench/README.md](bench/README.md) for what is and is not measured —
