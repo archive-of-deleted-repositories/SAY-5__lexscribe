@@ -146,7 +146,7 @@ class HdrHistogram:
         counts = self._snapshot()
         total = sum(counts)
         if total == 0:
-            return {p: 0 for p in ps}
+            return dict.fromkeys(ps, 0)
         # Sort percentiles ascending so we walk the buckets exactly once.
         ordered = sorted((p, max(1, math.ceil(total * p))) for p in ps)
         out: dict[float, int] = {}
