@@ -251,9 +251,13 @@ walks the full chunk set per query. A pgvector-backed deployment cuts the
 against the committed baseline and exits non-zero if any tracked metric
 (throughputs, ingest p95s, retrieval p95s, e2e p95, mean cost) drifts more
 than 30% in the regressing direction. CI runs the small-scale variant on
-every push as the `bench-regress` job. To re-baseline (after intentional
-performance work), regenerate the file with `make bench SCALE=small` and
-copy the resulting JSON over `bench/results/baseline_small.json`.
+every push as the `bench-regress` job; CI uses a 0.50 threshold rather than
+the script default 0.30 because a handful of retrieval stages are sub-50us
+at small scale and hit ±50% jitter on shared GitHub-runner hardware. The
+30% default is appropriate for stable local hardware. To re-baseline (after
+intentional performance work), regenerate the file with
+`make bench SCALE=small` and copy the resulting JSON over
+`bench/results/baseline_small.json`.
 
 Local-machine numbers on M-series Mac. Reproduce with `make bench`. See
 [bench/README.md](bench/README.md) for what is and is not measured —
