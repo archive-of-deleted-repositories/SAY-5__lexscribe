@@ -8,6 +8,12 @@ from pathlib import Path
 from typing import Any
 
 import click
+from lexscribe_shared.models import Citation
+from lexscribe_shared.verify import (
+    DictChunkStore,
+    StoredChunk,
+    verify_citation,
+)
 
 from lexscribe_eval.runner import run_suite
 
@@ -110,6 +116,103 @@ def leaderboard(runs_dir: Path) -> None:
     click.echo("| " + " | ".join("---" for _ in headers) + " |")
     for r in rows:
         click.echo("| " + " | ".join(str(r.get(h, "")) for h in headers) + " |")
+
+
+@cli.command("verify-citation")
+@click.argument("citation_path", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+@click.option(
+    "--store",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="JSON file with stored chunks for offline verification. "
+    "Falls back to a DB lookup if LEXSCRIBE_DATABASE_URL is set.",
+)
+def verify_citation_cmd(citation_path: Path, store: Path | None) -> None:
+    """Verify a citation's content hashes against the chunk store.
+
+    Exit 0 = OK; exit 1 = mismatch; exit 2 = malformed input.
+
+    Citation JSON shape — produced by ``answer_question`` and persisted in the
+    eval run rows:
+
+        {
+          "doc_id": "...",
+          "version": 1,
+          "page": 12,
+          "char_start": 0,
+          "char_end": 240,
+          "score": 0.83,
+          "chunk_hash": "<sha256 hex>",
+          "doc_canonical_hash": "<sha256 hex>"
+        }
+
+    Store JSON shape (offline mode) — list of records:
+
+        [
+          {
+            "doc_id": "...",
+            "version": 1,
+            "page": 12,
+            "char_start": 0,
+            "char_end": 240,
+            "text": "...",
+            "doc_text": "..."          # optional, doc-level canonical text
+          },
+          ...
+        ]
+    """
+
+    try:
+        citation_payload = json.loads(citation_path.read_text())
+        citation = Citation(**citation_payload)
+    except Exception as exc:
+        click.echo(f"# malformed citation: {exc}", err=True)
+        sys.exit(2)
+
+    if store is None:
+        click.echo(
+            "# verify-citation: --store is required in offline mode "
+            "(DB lookup not implemented in this build).",
+            err=True,
+        )
+        sys.exit(2)
+
+    chunk_store = DictChunkStore()
+    try:
+        records = json.loads(store.read_text())
+        if not isinstance(records, list):
+            raise ValueError("store JSON must be a list")
+        for r in records:
+            chunk_store.put_chunk(
+                doc_id=r["doc_id"],
+                version=int(r["version"]),
+                chunk=StoredChunk(
+                    text=r["text"],
+                    page=int(r["page"]),
+                    char_start=int(r["char_start"]),
+                    char_end=int(r["char_end"]),
+                ),
+            )
+            if "doc_text" in r:
+                chunk_store.put_doc(
+                    doc_id=r["doc_id"],
+                    version=int(r["version"]),
+                    full_text=r["doc_text"],
+                )
+    except Exception as exc:
+        click.echo(f"# malformed store: {exc}", err=True)
+        sys.exit(2)
+
+    result = verify_citation(citation, chunk_store)
+    if result.ok:
+        click.echo(
+            f"OK doc_id={citation.doc_id} version={citation.version} "
+            f"page={citation.page} chars=[{citation.char_start},{citation.char_end}) "
+            f"chunk_hash={citation.chunk_hash}"
+        )
+        sys.exit(0)
+    click.echo(result.diff)
+    sys.exit(1)
 
 
 if __name__ == "__main__":
