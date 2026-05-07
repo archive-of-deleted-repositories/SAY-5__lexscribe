@@ -134,6 +134,26 @@ question pins the expected document and a verified `(page, char_start,
 char_end)` citation range, so the retrieval gate has ground truth to
 score against.
 
+### Verifiable citations
+
+Every served `Citation` carries `chunk_hash` and `doc_canonical_hash` —
+sha256 over the canonical text form (NFKC + lower + whitespace-collapse).
+Verify a saved citation:
+
+```bash
+lexscribe verify-citation runs/citation_0.json --store store.json
+# OK doc_id=...   chunk_hash=...
+# (or, on tampering)
+# ## citation hash mismatch
+# ### chunk_hash
+# - recorded:  ...
+# - recomputed:...
+```
+
+Exit code is `0` for OK, `1` for mismatch, `2` for malformed input. The
+schema design and the `tampered-chunk-eval-smoke` CI gate are documented
+in [ARCHITECTURE.md](ARCHITECTURE.md#verifiable-citations-content-hashes).
+
 ## Targets (design — not measured here)
 
 | Metric | Target |

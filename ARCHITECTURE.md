@@ -108,6 +108,41 @@ the initial migration so the round-trip test is one transaction. In production,
 swap them for `CREATE INDEX CONCURRENTLY` in an autocommit block — that is a
 one-line change and is documented at the call site.
 
+## Verifiable citations (content hashes)
+
+Every served `Citation` carries two sha256 digests computed at ingest:
+
+- **`chunk_hash`** — sha256 of the canonical form of the chunk's text.
+- **`doc_canonical_hash`** — sha256 of the canonical form of the whole
+  doc-version text, persisted on `doc_versions.canonical_hash`.
+
+Canonical form = `unicodedata.NFKC(text).lower()` followed by whitespace
+collapse + strip. The lower-case step is part of the canonical form because
+contract drafts often render the same clause in different cases across
+versions; folding case here means cosmetic re-rendering does not invalidate
+a citation.
+
+**Why per-chunk and per-doc.** The chunk hash pins the actual evidence span
+the answer was generated from. The doc-canonical hash gives a corpus-level
+"did the doc-version's bytes drift" signal: if a downstream re-ingest of the
+same `(doc_id, version)` produces a different canonical hash, every citation
+it carries is suspect even if the chunk text at the cited coordinates still
+hashes correctly.
+
+**Verification.** `lexscribe verify-citation <citation.json> --store <store.json>`
+re-fetches the chunk text from the store, recomputes the hash, and compares.
+Exit `0` on match, exit `1` with a Markdown diff on mismatch. The `--store`
+flag also accepts an optional `doc_text` field so the doc-level digest can be
+checked. A DB-backed store is in scope for production (the migration
+`0002_content_hash_citations.py` provides the schema); the CLI ships with a
+JSON-file store for offline replay of historic runs.
+
+**Tampered-chunk gate.** `tests/test_tampered_chunk_eval.py` drives
+`answer_question` against the demo corpus, then mutates one returned
+citation's chunk text in a `DictChunkStore` and asserts `verify_citation`
+flags the mismatch. The CI job `tampered-chunk-eval-smoke` runs this on
+every push.
+
 ## Provider seam
 
 Every external call (LLM, embeddings) goes through a `Protocol`. Tests use

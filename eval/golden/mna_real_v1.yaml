@@ -9,6 +9,12 @@ description: |
   / 4000) + 1, char offsets relative to the start of that page.
   See `scripts/data/edgar/MANIFEST.md` for source URLs.
 
+  Verifiability gate: every served citation must carry `chunk_hash` and
+  `doc_canonical_hash` (sha256 over the canonical text form). The
+  `tampered-chunk-eval-smoke` CI job (`tests/test_tampered_chunk_eval.py`)
+  asserts that `lexscribe_shared.verify.verify_citation` flags a chunk whose
+  bytes drift from the recorded hash.
+
 corpus: edgar
 questions:
   - id: r01
