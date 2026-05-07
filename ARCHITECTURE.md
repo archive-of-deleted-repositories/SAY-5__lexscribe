@@ -108,6 +108,54 @@ the initial migration so the round-trip test is one transaction. In production,
 swap them for `CREATE INDEX CONCURRENTLY` in an autocommit block — that is a
 one-line change and is documented at the call site.
 
+## Ingest WAL (durable replay)
+
+Every ingest sub-task writes a row in ``ingest_wal`` *before* it does work,
+transitions to ``in_progress`` while running, and to ``succeeded`` (or
+``failed``) after. A worker that crashes between any two transitions leaves
+the row in ``pending`` or ``in_progress``; on the next worker startup,
+``replay_pending`` finds those rows and re-issues exactly the work that
+didn't finish.
+
+State machine:
+
+```
+   write_pending()
+        │
+        ▼
+   ┌──────────┐   mark_in_progress()    ┌──────────────┐
+   │ pending  │ ──────────────────────► │ in_progress  │
+   └──────────┘                         └──────┬───────┘
+                                               │
+                              mark_succeeded() │  mark_failed()
+                                               ▼
+                                       ┌────────────┐  ┌─────────┐
+                                       │ succeeded  │  │ failed  │
+                                       └────────────┘  └─────────┘
+
+   replay_pending() picks up every row whose status is
+   { pending, in_progress } and re-runs the handler.
+```
+
+Idempotency at the DB layer: a partial unique index on
+``(doc_version_id, stage, COALESCE(chunk_idx, -1)) WHERE status != 'failed'``
+prevents two active rows for the same work unit. After a failure the failed
+row is preserved (for forensics) and a fresh attempt inserts a new active
+row.
+
+This is **at-least-once with idempotent dedup**, not exactly-once. The WAL
+table is the dedup boundary: a handler may be invoked again for a row whose
+work already happened (the previous worker crashed *between* doing the work
+and marking the row succeeded). Handlers are written to be safe to re-run —
+each stage's idempotency token (chunk's content-addressed ``chunk_hash``,
+embedding's deterministic vector under FakeProvider, classifier's label
+unique on `(span_id, clause_type)`) prevents duplicate side-effects.
+
+The **chaos test** at `tests/test_wal_chaos.py` (gated on ``RUN_CHAOS=1``)
+spawns 200-page chaos pipelines and asserts ``chunk_count == expected_pages``
+and ``embed_completed_count == chunk_count`` after replay. CI runs the
+smaller-scale variant on every push as the ``wal-chaos-smoke`` job.
+
 ## Verifiable citations (content hashes)
 
 Every served `Citation` carries two sha256 digests computed at ingest:

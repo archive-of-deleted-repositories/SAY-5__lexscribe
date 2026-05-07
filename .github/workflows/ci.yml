@@ -103,6 +103,33 @@ jobs:
           lexscribe eval run --suite mna_v1 --provider fake --limit 5 \
             --output runs/ci-smoke.json
 
+  wal-chaos-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: |
+          python -m pip install -U pip wheel
+          pip install -e ".[dev]"
+      - name: Run WAL chaos contract at 10 pages
+        run: |
+          python -c "
+          from lexscribe_worker.wal import init_engine, run_chaos_smoke
+          engine = init_engine()
+          result = run_chaos_smoke(pages=10, kill_at_chunk=4, engine=engine)
+          print(f'expected_pages={result.expected_pages}')
+          print(f'chunk_count={result.chunk_count}')
+          print(f'embed_completed_count={result.embed_completed_count}')
+          print(f'failures={result.failures}')
+          assert result.chunk_count == result.expected_pages, result
+          assert result.embed_completed_count == result.chunk_count, result
+          assert result.failures == 0, result
+          "
+
   tampered-chunk-eval-smoke:
     runs-on: ubuntu-latest
     steps:
