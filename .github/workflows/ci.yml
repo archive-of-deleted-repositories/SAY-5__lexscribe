@@ -120,11 +120,6 @@ jobs:
           mkdir -p bench/results
           python bench/bench.py --scale small --seed 1 \
             --results-dir bench/results
-      - name: Upload bench artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bench-small
-          path: bench/results/*_small.json
       - name: Compare against committed baseline (30% drift threshold)
         run: |
           NEW=$(ls -t bench/results/*_small.json | head -1)

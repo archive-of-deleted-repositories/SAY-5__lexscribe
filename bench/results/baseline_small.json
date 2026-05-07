@@ -1,101 +1,101 @@
 {
   "schema_version": 1,
   "scale": "small",
-  "timestamp_utc": "20260505T234516Z",
+  "timestamp_utc": "20260507T201218Z",
   "n_docs": 10,
   "n_chunks": 70,
   "n_queries": 50,
-  "ingest_seconds": 0.026707958983024582,
-  "docs_per_sec": 374.4202245613729,
-  "chunks_per_sec": 2620.9415719296103,
+  "ingest_seconds": 0.03963493399999152,
+  "docs_per_sec": 252.302678238398,
+  "chunks_per_sec": 1766.1187476687858,
   "ingest_stage_ms": {
     "parse": {
       "stage": "parse",
       "n": 10,
-      "p50": 0.4849580000154674,
-      "p95": 0.6411670183297247,
-      "p99": 0.6411670183297247,
-      "p999": 0.6411670183297247,
-      "max": 0.6411670183297247
+      "p50": 0.9795109999970464,
+      "p95": 1.2675870000009581,
+      "p99": 1.2675870000009581,
+      "p999": 1.2675870000009581,
+      "max": 1.2675870000009581
     },
     "chunk": {
       "stage": "chunk",
       "n": 10,
-      "p50": 0.1787919900380075,
-      "p95": 0.2180419978685677,
-      "p99": 0.2180419978685677,
-      "p999": 0.2180419978685677,
-      "max": 0.2180419978685677
+      "p50": 0.32276000000308613,
+      "p95": 0.4165650000089727,
+      "p99": 0.4165650000089727,
+      "p999": 0.4165650000089727,
+      "max": 0.4165650000089727
     },
     "embed": {
       "stage": "embed",
       "n": 10,
-      "p50": 0.1124159898608923,
-      "p95": 0.13508301344700158,
-      "p99": 0.13508301344700158,
-      "p999": 0.13508301344700158,
-      "max": 0.13508301344700158
+      "p50": 0.17232999999805543,
+      "p95": 0.2012149999899293,
+      "p99": 0.2012149999899293,
+      "p999": 0.2012149999899293,
+      "max": 0.2012149999899293
     },
     "classify": {
       "stage": "classify",
       "n": 10,
-      "p50": 0.020333012798801064,
-      "p95": 0.030291994335129857,
-      "p99": 0.030291994335129857,
-      "p999": 0.030291994335129857,
-      "max": 0.030291994335129857
+      "p50": 0.0340429999994285,
+      "p95": 0.040314999992574485,
+      "p99": 0.040314999992574485,
+      "p999": 0.040314999992574485,
+      "max": 0.040314999992574485
     }
   },
   "retrieval_stage_us_hdr": {
     "bm25": {
       "stage": "bm25",
       "n": 50,
-      "p50_us": 78,
-      "p95_us": 86,
-      "p99_us": 114,
-      "p999_us": 114,
-      "max_us": 115
+      "p50_us": 148,
+      "p95_us": 180,
+      "p99_us": 252,
+      "p999_us": 252,
+      "max_us": 255
     },
     "dense": {
       "stage": "dense",
       "n": 50,
-      "p50_us": 528,
-      "p95_us": 560,
-      "p99_us": 560,
-      "p999_us": 560,
-      "max_us": 575
+      "p50_us": 880,
+      "p95_us": 880,
+      "p99_us": 912,
+      "p999_us": 912,
+      "max_us": 927
     },
     "fusion": {
       "stage": "fusion",
       "n": 50,
-      "p50_us": 12,
-      "p95_us": 14,
-      "p99_us": 20,
-      "p999_us": 20,
-      "max_us": 20
+      "p50_us": 23,
+      "p95_us": 25,
+      "p99_us": 37,
+      "p999_us": 37,
+      "max_us": 37
     },
     "rerank": {
       "stage": "rerank",
       "n": 50,
-      "p50_us": 752,
-      "p95_us": 784,
-      "p99_us": 816,
-      "p999_us": 816,
-      "max_us": 831
+      "p50_us": 1568,
+      "p95_us": 1632,
+      "p99_us": 1696,
+      "p999_us": 1696,
+      "max_us": 1727
     }
   },
   "end_to_end_qa_ms": {
     "stage": "e2e_qa",
     "n": 50,
-    "p50": 1.438749983208254,
-    "p95": 1.4947089948691428,
-    "p99": 1.5750830061733723,
-    "p999": 1.5750830061733723,
-    "max": 1.5750830061733723
+    "p50": 2.7186059999877443,
+    "p95": 2.8277990000020736,
+    "p99": 2.8322569999943426,
+    "p999": 2.8322569999943426,
+    "max": 2.8322569999943426
   },
   "cost_per_turn_usd": {
-    "mean": 0.004354739999999999,
-    "p95": 0.004817999999999999
+    "mean": 0.004255859999999999,
+    "p95": 0.004572
   },
-  "report": "# lexscribe bench \u2014 small (10 docs, 50 queries)\n# 20260505T234516Z, fake-provider, in-process\n## ingestion\ndocs/sec   : 374.42\nchunks/sec : 2620.94\nchunks     : 70\n## per-stage latency (ms)\nstage       p50      p95      p99      p999     max    \nparse       0.48     0.64     0.64     0.64     0.64   \nchunk       0.18     0.22     0.22     0.22     0.22   \nembed       0.11     0.14     0.14     0.14     0.14   \nclassify    0.02     0.03     0.03     0.03     0.03   \n## retrieval latency (us, HDR log-bucketed)\nstage       p50      p95      p99      p999     max    \nbm25        78       86       114      114      115    \ndense       528      560      560      560      575    \nfusion      12       14       20       20       20     \nrerank      752      784      816      816      831    \n## end-to-end Q&A latency (ms)\nstage       p50      p95      p99      p999     max    \ne2e_qa      1.44     1.49     1.58     1.58     1.58   \n## cost per turn (USD, FakeProvider \u2014 for accounting shape, not real cost)\nmean : 0.004355\np95  : 0.004818\n# Local-machine numbers on M-series Mac. See bench/README.md for methodology."
+  "report": "# lexscribe bench \u2014 small (10 docs, 50 queries)\n# 20260507T201218Z, fake-provider, in-process\n## ingestion\ndocs/sec   : 252.30\nchunks/sec : 1766.12\nchunks     : 70\n## per-stage latency (ms)\nstage       p50      p95      p99      p999     max    \nparse       0.98     1.27     1.27     1.27     1.27   \nchunk       0.32     0.42     0.42     0.42     0.42   \nembed       0.17     0.20     0.20     0.20     0.20   \nclassify    0.03     0.04     0.04     0.04     0.04   \n## retrieval latency (us, HDR log-bucketed)\nstage       p50      p95      p99      p999     max    \nbm25        148      180      252      252      255    \ndense       880      880      912      912      927    \nfusion      23       25       37       37       37     \nrerank      1568     1632     1696     1696     1727   \n## end-to-end Q&A latency (ms)\nstage       p50      p95      p99      p999     max    \ne2e_qa      2.72     2.83     2.83     2.83     2.83   \n## cost per turn (USD, FakeProvider \u2014 for accounting shape, not real cost)\nmean : 0.004256\np95  : 0.004572\n# Local-machine numbers on M-series Mac. See bench/README.md for methodology."
 }

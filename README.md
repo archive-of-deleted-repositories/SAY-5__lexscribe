@@ -163,26 +163,26 @@ above the 1us HDR floor. Numbers below come from
 
 ```
 # lexscribe bench — small (10 docs, 50 queries)
-# 20260505T234516Z, fake-provider, in-process
+# 20260507T201218Z, fake-provider, in-process — GitHub Actions ubuntu-latest
 ## ingestion
-docs/sec   : 336.37
-chunks/sec : 2354.58
+docs/sec   : 252.30
+chunks/sec : 1766.12
 chunks     : 70
 ## per-stage latency (ms)
 stage       p50      p95      p99      p999     max
-parse       0.50     0.64     0.64     0.64     0.64
-chunk       0.18     0.22     0.22     0.22     0.22
-embed       0.11     0.14     0.14     0.14     0.14
-classify    0.02     0.04     0.04     0.04     0.04
+parse       0.98     1.27     1.27     1.27     1.27
+chunk       0.32     0.42     0.42     0.42     0.42
+embed       0.17     0.20     0.20     0.20     0.20
+classify    0.03     0.04     0.04     0.04     0.04
 ## retrieval latency (us, HDR log-bucketed)
 stage       p50      p95      p99      p999     max
-bm25        78       86       114      114      115
-dense       528      560      560      560      575
-fusion      12       14       20       20       20
-rerank      752      784      816      816      831
+bm25        148      180      252      252      255
+dense       880      880      912      912      927
+fusion      23       25       37       37       37
+rerank      1568     1632     1696     1696     1727
 ## end-to-end Q&A latency (ms)
 stage       p50      p95      p99      p999     max
-e2e_qa      1.44     1.49     1.58     1.58     1.58
+e2e_qa      2.72     2.83     2.83     2.83     2.83
 ```
 
 `HybridSearcher.search` records into the same module-level HDR
