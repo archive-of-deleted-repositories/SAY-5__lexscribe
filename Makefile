@@ -1,4 +1,4 @@
-.PHONY: dev fmt lint typecheck test test-unit test-integration migrate seed seed-edgar eval bench bench-eval clean install
+.PHONY: dev fmt lint typecheck test test-unit test-integration migrate seed seed-edgar eval bench bench-eval bench-regress clean install
 
 PY ?= python3
 VENV ?= .venv
@@ -60,6 +60,19 @@ bench-legacy:
 bench-eval:
 	mkdir -p eval/runs
 	$(BIN)/lexscribe eval run --suite mna_v1 --provider fake --output eval/runs/$(shell date -u +%Y%m%dT%H%M%SZ).json
+
+# Compare a freshly produced bench JSON against a committed baseline.
+# Override BASELINE/NEW on the command line, e.g.:
+#   make bench-regress BASELINE=bench/results/baseline_small.json NEW=bench/results/<run>.json
+BASELINE ?= bench/results/baseline_$(SCALE).json
+NEW ?=
+THRESHOLD ?= 0.30
+bench-regress:
+	@if [ -z "$(NEW)" ]; then \
+		echo "usage: make bench-regress BASELINE=<file> NEW=<file> [THRESHOLD=0.30]"; \
+		exit 2; \
+	fi
+	$(BIN)/python bench/regress.py --baseline $(BASELINE) --new $(NEW) --threshold $(THRESHOLD)
 
 clean:
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +

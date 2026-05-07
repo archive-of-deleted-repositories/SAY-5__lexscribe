@@ -192,6 +192,49 @@ scrapes get microsecond-resolution percentiles for `bm25`, `dense`,
 end-to-end Q&A latency stays on the existing Prometheus `Histogram` —
 its 0.25–8s buckets are appropriate for that scale.
 
+### Large scale (1000 docs, 500 queries)
+
+Numbers below come from `bench/results/baseline_large.json`.
+
+```
+# lexscribe bench — large (1000 docs, 500 queries)
+# 20260507T200401Z, fake-provider, in-process
+## ingestion
+docs/sec   : 694.11
+chunks/sec : 4858.75
+chunks     : 7000
+## per-stage latency (ms)
+stage       p50      p95      p99      p999     max
+parse       0.75     0.91     1.15     1.92     1.96
+chunk       0.27     0.33     0.38     0.50     0.58
+embed       0.16     0.18     0.25     0.42     1.22
+classify    0.03     0.04     0.04     0.07     0.31
+## retrieval latency (us, HDR log-bucketed)
+stage       p50      p95      p99      p999     max
+bm25        10496    13568    15616    35840    36863
+dense       75776    83968    112640   129024   131071
+fusion      33       41       47       102      103
+rerank      1056     1632     1760     3776     3839
+## end-to-end Q&A latency (ms)
+stage       p50      p95      p99      p999     max
+e2e_qa      87.96    99.24    124.48   143.12   143.12
+```
+
+The retrieval stages scale roughly linearly with corpus size — `bm25` and
+`dense` p95 grow ~150× from small to large because the in-memory searcher
+walks the full chunk set per query. A pgvector-backed deployment cuts the
+`dense` line dramatically; this harness measures the worst case.
+
+### Regression gate
+
+`make bench-regress BASELINE=<file> NEW=<file>` compares a fresh run JSON
+against the committed baseline and exits non-zero if any tracked metric
+(throughputs, ingest p95s, retrieval p95s, e2e p95, mean cost) drifts more
+than 30% in the regressing direction. CI runs the small-scale variant on
+every push as the `bench-regress` job. To re-baseline (after intentional
+performance work), regenerate the file with `make bench SCALE=small` and
+copy the resulting JSON over `bench/results/baseline_small.json`.
+
 Local-machine numbers on M-series Mac. Reproduce with `make bench`. See
 [bench/README.md](bench/README.md) for what is and is not measured —
 short version: this exercises the in-process retrieval+provider path with

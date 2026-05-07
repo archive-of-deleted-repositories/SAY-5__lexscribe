@@ -75,6 +75,7 @@ scripts/data/edgar/*.pdf
 bench/results/*.json
 !bench/results/.gitkeep
 !bench/results/baseline_small.json
+!bench/results/baseline_large.json
 
 # Docker
 .docker/

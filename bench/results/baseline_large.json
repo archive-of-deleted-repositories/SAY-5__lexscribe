@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "scale": "large",
+  "timestamp_utc": "20260507T200401Z",
+  "n_docs": 1000,
+  "n_chunks": 7000,
+  "n_queries": 500,
+  "ingest_seconds": 1.4406999589991756,
+  "docs_per_sec": 694.1070510577923,
+  "chunks_per_sec": 4858.749357404546,
+  "ingest_stage_ms": {
+    "parse": {
+      "stage": "parse",
+      "n": 1000,
+      "p50": 0.7470420096069574,
+      "p95": 0.9086250211112201,
+      "p99": 1.150958996731788,
+      "p999": 1.9235830113757402,
+      "max": 1.9617500074673444
+    },
+    "chunk": {
+      "stage": "chunk",
+      "n": 1000,
+      "p50": 0.2704579965211451,
+      "p95": 0.32804199145175517,
+      "p99": 0.3787500027101487,
+      "p999": 0.4962499951943755,
+      "max": 0.5767919938080013
+    },
+    "embed": {
+      "stage": "embed",
+      "n": 1000,
+      "p50": 0.16233400674536824,
+      "p95": 0.18125001224689186,
+      "p99": 0.24737499188631773,
+      "p999": 0.42033300269395113,
+      "max": 1.2202499783597887
+    },
+    "classify": {
+      "stage": "classify",
+      "n": 1000,
+      "p50": 0.029874994652345777,
+      "p95": 0.03500000457279384,
+      "p99": 0.04041599459014833,
+      "p999": 0.07345800986513495,
+      "max": 0.30858299578540027
+    }
+  },
+  "retrieval_stage_us_hdr": {
+    "bm25": {
+      "stage": "bm25",
+      "n": 500,
+      "p50_us": 10496,
+      "p95_us": 13568,
+      "p99_us": 15616,
+      "p999_us": 35840,
+      "max_us": 36863
+    },
+    "dense": {
+      "stage": "dense",
+      "n": 500,
+      "p50_us": 75776,
+      "p95_us": 83968,
+      "p99_us": 112640,
+      "p999_us": 129024,
+      "max_us": 131071
+    },
+    "fusion": {
+      "stage": "fusion",
+      "n": 500,
+      "p50_us": 33,
+      "p95_us": 41,
+      "p99_us": 47,
+      "p999_us": 102,
+      "max_us": 103
+    },
+    "rerank": {
+      "stage": "rerank",
+      "n": 500,
+      "p50_us": 1056,
+      "p95_us": 1632,
+      "p99_us": 1760,
+      "p999_us": 3776,
+      "max_us": 3839
+    }
+  },
+  "end_to_end_qa_ms": {
+    "stage": "e2e_qa",
+    "n": 500,
+    "p50": 87.96212502056733,
+    "p95": 99.23937497660518,
+    "p99": 124.47758301277645,
+    "p999": 143.12133297789842,
+    "max": 143.12133297789842
+  },
+  "cost_per_turn_usd": {
+    "mean": 0.002623242,
+    "p95": 0.004194
+  },
+  "report": "# lexscribe bench \u2014 large (1000 docs, 500 queries)\n# 20260507T200401Z, fake-provider, in-process\n## ingestion\ndocs/sec   : 694.11\nchunks/sec : 4858.75\nchunks     : 7000\n## per-stage latency (ms)\nstage       p50      p95      p99      p999     max    \nparse       0.75     0.91     1.15     1.92     1.96   \nchunk       0.27     0.33     0.38     0.50     0.58   \nembed       0.16     0.18     0.25     0.42     1.22   \nclassify    0.03     0.04     0.04     0.07     0.31   \n## retrieval latency (us, HDR log-bucketed)\nstage       p50      p95      p99      p999     max    \nbm25        10496    13568    15616    35840    36863  \ndense       75776    83968    112640   129024   131071 \nfusion      33       41       47       102      103    \nrerank      1056     1632     1760     3776     3839   \n## end-to-end Q&A latency (ms)\nstage       p50      p95      p99      p999     max    \ne2e_qa      87.96    99.24    124.48   143.12   143.12 \n## cost per turn (USD, FakeProvider \u2014 for accounting shape, not real cost)\nmean : 0.002623\np95  : 0.004194\n# Local-machine numbers on M-series Mac. See bench/README.md for methodology."
+}

@@ -103,6 +103,31 @@ jobs:
           lexscribe eval run --suite mna_v1 --provider fake --limit 5 \
             --output runs/ci-smoke.json
 
+  bench-regress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: |
+          python -m pip install -U pip wheel
+          pip install -e ".[dev]"
+      - name: Run small-scale bench
+        run: |
+          mkdir -p bench/results
+          python bench/bench.py --scale small --seed 1 \
+            --results-dir bench/results
+      - name: Compare against committed baseline (30% drift threshold)
+        run: |
+          NEW=$(ls -t bench/results/*_small.json | head -1)
+          python bench/regress.py \
+            --baseline bench/results/baseline_small.json \
+            --new "$NEW" \
+            --threshold 0.30
+
   build:
     needs: [lint, typecheck, test]
     runs-on: ubuntu-latest
