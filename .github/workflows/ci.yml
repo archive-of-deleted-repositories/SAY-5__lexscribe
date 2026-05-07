@@ -69,7 +69,7 @@ jobs:
             --cov=lexscribe_shared --cov=lexscribe_retrieval --cov=lexscribe_eval \
             --cov=lexscribe_api --cov=lexscribe_worker \
             --cov-report=term --cov-report=xml \
-            --cov-fail-under=70 -q
+            --cov-fail-under=75 -q
 
   contract:
     runs-on: ubuntu-latest
