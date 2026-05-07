@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from lexscribe_shared.canonicalize import chunk_hash, doc_canonical_hash
 from lexscribe_shared.errors import RetryableError
 from lexscribe_shared.retry import backoff_delays
 
@@ -28,6 +29,7 @@ def _serialise_chunks(pages: list[tuple[int, str]]) -> list[dict[str, Any]]:
             "char_start": c.char_start,
             "char_end": c.char_end,
             "text": c.text,
+            "chunk_hash": chunk_hash(c.text),
         }
         for c in chunk_pages(pages)
     ]
@@ -63,9 +65,11 @@ def parse_pdf(self, doc_id: str, version: int, s3_key: str) -> dict[str, Any]:
 @celery_app.task(name="lexscribe_worker.tasks.chunk")
 def chunk(parsed: dict[str, Any]) -> dict[str, Any]:
     pages: list[tuple[int, str]] = [(int(p["page_no"]), p["text"]) for p in parsed["pages"]]
+    full_text = "\n".join(t for _, t in pages)
     return {
         "doc_id": parsed["doc_id"],
         "version": parsed["version"],
+        "doc_canonical_hash": doc_canonical_hash(full_text),
         "chunks": _serialise_chunks(pages),
     }
 
@@ -102,6 +106,7 @@ def embed(self, chunked: dict[str, Any]) -> dict[str, Any]:
     return {
         "doc_id": chunked["doc_id"],
         "version": chunked["version"],
+        "doc_canonical_hash": chunked.get("doc_canonical_hash"),
         "chunks": chunked["chunks"],
         "embeddings": vecs,
     }

@@ -14,6 +14,7 @@ from __future__ import annotations
 from functools import lru_cache
 
 from lexscribe_retrieval.search import HybridSearcher, IndexedChunk
+from lexscribe_shared.canonicalize import chunk_hash, doc_canonical_hash
 from lexscribe_shared.costing import CostRates, turn_cost
 from lexscribe_shared.models import Citation, QARequest, QAResponse, Usage
 from lexscribe_shared.providers import (
@@ -52,7 +53,17 @@ _DEMO_PAGES: list[tuple[int, str]] = [
 ]
 
 
-def _chunk_to_citation(chunk_id: str, text: str, score: float) -> Citation:
+_DEMO_FULL_TEXT = "\n".join(t for _, t in _DEMO_PAGES)
+_DEMO_DOC_HASH = doc_canonical_hash(_DEMO_FULL_TEXT)
+
+
+def _chunk_to_citation(
+    chunk_id: str,
+    text: str,
+    score: float,
+    *,
+    doc_hash: str | None = None,
+) -> Citation:
     """Decode a structured ``chunk_id`` back to citation coordinates.
 
     Two formats are supported:
@@ -60,6 +71,11 @@ def _chunk_to_citation(chunk_id: str, text: str, score: float) -> Citation:
     * ``"<doc_id>::p<n>"`` — legacy demo corpus, no per-chunk char range.
     * ``"<doc_id>::p<n>::<char_start>-<char_end>"`` — produced by the
       EDGAR seed and the worker DAG.
+
+    ``chunk_hash`` and ``doc_canonical_hash`` are populated unconditionally —
+    the chunk hash is recomputed from the chunk text we have in hand, and the
+    doc-level hash defaults to the demo-corpus digest unless the caller passes
+    one through (the EDGAR seed and DB-backed corpora know their own).
     """
 
     parts = chunk_id.split("::")
@@ -86,6 +102,8 @@ def _chunk_to_citation(chunk_id: str, text: str, score: float) -> Citation:
         char_start=char_start,
         char_end=char_end,
         score=score,
+        chunk_hash=chunk_hash(text),
+        doc_canonical_hash=doc_hash if doc_hash is not None else _DEMO_DOC_HASH,
     )
 
 

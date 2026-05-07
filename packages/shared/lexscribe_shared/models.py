@@ -30,7 +30,18 @@ class ClauseType(str, Enum):
 
 
 class Citation(BaseModel):
-    """Span-level pointer back to the source document."""
+    """Span-level pointer back to the source document.
+
+    ``chunk_hash`` and ``doc_canonical_hash`` are sha256 hex digests of the
+    canonical text form (NFKC + lowercase + whitespace-collapse) of the chunk
+    and the whole document respectively. They are populated at ingest by the
+    worker and let downstream readers verify a citation has not silently
+    drifted because the underlying doc-version was edited after the answer was
+    served. See ``lexscribe verify-citation``.
+
+    The fields default to ``None`` to keep the model backward-compatible with
+    suites + corpora that pre-date the v3 hash schema.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -40,6 +51,8 @@ class Citation(BaseModel):
     char_start: int = Field(ge=0)
     char_end: int = Field(ge=0)
     score: float = Field(ge=0.0, le=1.0)
+    chunk_hash: str | None = None
+    doc_canonical_hash: str | None = None
 
 
 class Usage(BaseModel):
